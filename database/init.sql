@@ -98,5 +98,6 @@ CREATE TRIGGER update_tasks_updated_at BEFORE UPDATE ON tasks FOR EACH ROW EXECU
 -- Seed default admin user (password: Admin@123)
 INSERT INTO users (name, email, password_hash, role) VALUES
   ('Super Admin', 'admin@somp.com', '$2a$10$q5QRyK6SgNKxWYl8NlYtneQljfgDNG0/4T4JRkAtIotTpcjnze7q2', 'administrator'),
-  ('Project Manager', 'manager@somp.com', '$2a$10$q5QRyK6SgNKxWYl8NlYtneQljfgDNG0/4T4JRkAtIotTpcjnze7q2', 'manager')
+  ('Project Manager', 'manager@somp.com', '$2a$10$q5QRyK6SgNKxWYl8NlYtneQljfgDNG0/4T4JRkAtIotTpcjnze7q2', 'manager'),
+  ('Kamindu Gayantha', 'kamindu@somp.com', '$2a$10$q5QRyK6SgNKxWYl8NlYtneQljfgDNG0/4T4JRkAtIotTpcjnze7q2', 'user')
 ON CONFLICT (email) DO NOTHING;
