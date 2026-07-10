@@ -1,0 +1,139 @@
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: somp-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: somp_db
+      POSTGRES_USER: somp_user
+      POSTGRES_PASSWORD: somp_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - somp-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U somp_user -d somp_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Auth Service
+  auth-service:
+    build:
+      context: ./backend/auth-service
+      dockerfile: Dockerfile
+    container_name: somp-auth-service
+    restart: unless-stopped
+    environment:
+      PORT: 4001
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: somp_db
+      DB_USER: somp_user
+      DB_PASSWORD: somp_password
+      JWT_SECRET: somp_super_secret_jwt_key_2024
+      JWT_EXPIRES_IN: 7d
+    ports:
+      - "4001:4001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - somp-network
+
+  # Project Service
+  project-service:
+    build:
+      context: ./backend/project-service
+      dockerfile: Dockerfile
+    container_name: somp-project-service
+    restart: unless-stopped
+    environment:
+      PORT: 4002
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: somp_db
+      DB_USER: somp_user
+      DB_PASSWORD: somp_password
+      JWT_SECRET: somp_super_secret_jwt_key_2024
+    ports:
+      - "4002:4002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - somp-network
+
+  # Task Service
+  task-service:
+    build:
+      context: ./backend/task-service
+      dockerfile: Dockerfile
+    container_name: somp-task-service
+    restart: unless-stopped
+    environment:
+      PORT: 4003
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: somp_db
+      DB_USER: somp_user
+      DB_PASSWORD: somp_password
+      JWT_SECRET: somp_super_secret_jwt_key_2024
+    ports:
+      - "4003:4003"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - somp-network
+
+  # API Gateway
+  gateway:
+    build:
+      context: ./backend/gateway
+      dockerfile: Dockerfile
+    container_name: somp-gateway
+    restart: unless-stopped
+    environment:
+      PORT: 4000
+      AUTH_SERVICE_URL: http://auth-service:4001
+      PROJECT_SERVICE_URL: http://project-service:4002
+      TASK_SERVICE_URL: http://task-service:4003
+      JWT_SECRET: somp_super_secret_jwt_key_2024
+    ports:
+      - "4000:4000"
+    depends_on:
+      - auth-service
+      - project-service
+      - task-service
+    networks:
+      - somp-network
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: somp-frontend
+    restart: unless-stopped
+    environment:
+      VITE_API_URL: http://localhost:4000
+      VITE_WS_URL: http://localhost:4000
+    ports:
+      - "3002:80"
+    depends_on:
+      - gateway
+    networks:
+      - somp-network
+
+volumes:
+  postgres_data:
+
+networks:
+  somp-network:
+    driver: bridge
