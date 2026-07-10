@@ -101,12 +101,6 @@ const LoginPage: React.FC = () => {
               </div>
             ))}
           </div>
-
-          <div style={{ marginTop: '48px', padding: '16px 20px', borderRadius: '12px', background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)' }}>
-            <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginBottom: '8px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Demo Credentials</p>
-            <p style={{ fontSize: '13px', color: 'var(--color-text-dim)', fontFamily: 'JetBrains Mono, monospace' }}>admin@somp.com / Admin@123</p>
-            <p style={{ fontSize: '13px', color: 'var(--color-text-dim)', fontFamily: 'JetBrains Mono, monospace' }}>manager@somp.com / Admin@123</p>
-          </div>
         </div>
       </div>
 
