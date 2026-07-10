@@ -121,11 +121,7 @@ const LoginPage: React.FC = () => {
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {mode === 'register' && (
-            <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: 'var(--color-text-dim)', marginBottom: '6px' }}>Full Name</label>
-              <input className="input" type="text" placeholder="John Doe" value={form.name}
-                onChange={e => setForm(f => ({ ...f, name: e.target.value }))} required />
-            </div>
+            
           )}
 
           <div>
