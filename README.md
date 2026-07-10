@@ -20,3 +20,26 @@ Then open: **http://localhost:3000**
 | Manager | manager@somp.com | Admin@123 |
 | General User | kamindu@somp.com | Admin@123 |
 
+
+## Pages
+
+## Dashboard
+
+![Dashboard](screenshots/dashboard.png)
+
+## Login Page
+
+![Login Page](screenshots/login.png)
+
+## Notifications
+
+![Notifications](screenshots/notifications.png)
+
+## Audit Log
+
+![Audit Log](screenshots/audit_log.png)
+
+## Users List
+
+![Users List](screenshots/users_list.png)
+
