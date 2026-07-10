@@ -5,14 +5,12 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
-// Attach token automatically
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('somp_token');
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
-// Handle 401 globally
 api.interceptors.response.use(
   (res) => res,
   (err) => {
@@ -27,7 +25,6 @@ api.interceptors.response.use(
 
 export default api;
 
-// ─── Auth ──────────────────────────────────────────────────────────────────────
 export const authApi = {
   login: (email: string, password: string) =>
     api.post('/auth/login', { email, password }),
@@ -47,7 +44,6 @@ export const authApi = {
   markAllRead: () => api.put('/auth/notifications/read-all'),
 };
 
-// ─── Projects ─────────────────────────────────────────────────────────────────
 export const projectApi = {
   getAll: (params?: { status?: string; search?: string }) =>
     api.get('/projects', { params }),
@@ -61,7 +57,6 @@ export const projectApi = {
   search: (q: string) => api.get('/projects/search/q', { params: { q } }),
 };
 
-// ─── Tasks ────────────────────────────────────────────────────────────────────
 export const taskApi = {
   getAll: (params?: { project_id?: string; status?: string; priority?: string; assigned_user_id?: string; search?: string }) =>
     api.get('/tasks', { params }),
@@ -82,7 +77,6 @@ export const taskApi = {
   search: (q: string) => api.get('/tasks/search/q', { params: { q } }),
 };
 
-// ─── Global ───────────────────────────────────────────────────────────────────
 export const globalApi = {
   getStats: () => api.get('/stats'),
   search: (q: string) => api.get('/search', { params: { q } }),
