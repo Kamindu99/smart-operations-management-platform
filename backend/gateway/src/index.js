@@ -16,6 +16,8 @@ const PORT = process.env.PORT || 4000;
 const JWT_SECRET = process.env.JWT_SECRET || 'somp_super_secret_jwt_key_2024';
 
 const AUTH_SERVICE_URL    = process.env.AUTH_SERVICE_URL    || 'http://localhost:4001';
+const PROJECT_SERVICE_URL = process.env.PROJECT_SERVICE_URL || 'http://localhost:4002';
+const TASK_SERVICE_URL    = process.env.TASK_SERVICE_URL    || 'http://localhost:4003';
 
 const io = new Server(server, {
   cors: { origin: '*', methods: ['GET', 'POST'] },
@@ -79,9 +81,54 @@ const makeProxy = (target) => createProxyMiddleware({
 });
 
 const authProxy    = makeProxy(AUTH_SERVICE_URL);
+const projectProxy = makeProxy(PROJECT_SERVICE_URL);
+const taskProxy    = makeProxy(TASK_SERVICE_URL);
 
 app.get('/health', (req, res) => res.json({ status: 'ok', service: 'api-gateway', port: PORT }));
 app.get('/', (req, res) => res.json({ message: 'SOMP API Gateway v1.0.0' }));
+
+app.use('/api/stats',  express.json(), authenticate, async (req, res) => {
+  try {
+    const h = { Authorization: req.headers.authorization, 'x-user-id': req.headers['x-user-id'], 'x-user-role': req.headers['x-user-role'] };
+    const [u, p, t] = await Promise.allSettled([
+      axios.get(`${AUTH_SERVICE_URL}/auth/users`, { headers: h }),
+      axios.get(`${PROJECT_SERVICE_URL}/projects/stats`, { headers: h }),
+      axios.get(`${TASK_SERVICE_URL}/tasks/stats`, { headers: h }),
+    ]);
+    const users    = u.status === 'fulfilled' ? u.value.data : [];
+    const projects = p.status === 'fulfilled' ? p.value.data : {};
+    const tasks    = t.status === 'fulfilled' ? t.value.data : {};
+    res.json({
+      users: { total: users.length, admins: users.filter(x => x.role === 'administrator').length, managers: users.filter(x => x.role === 'manager').length, active: users.filter(x => x.is_active).length },
+      projects, tasks, onlineUsers: connectedUsers.size,
+    });
+  } catch (err) { res.status(500).json({ error: 'Stats unavailable' }); }
+});
+
+app.get('/api/search', authenticate, async (req, res) => {
+  const { q } = req.query;
+  if (!q || q.trim().length < 2) return res.json([]);
+  try {
+    const h = { Authorization: req.headers.authorization, 'x-user-id': req.headers['x-user-id'], 'x-user-role': req.headers['x-user-role'] };
+    const [u, p, t] = await Promise.allSettled([
+      axios.get(`${AUTH_SERVICE_URL}/auth/search?q=${encodeURIComponent(q)}`, { headers: h }),
+      axios.get(`${PROJECT_SERVICE_URL}/projects/search/q?q=${encodeURIComponent(q)}`, { headers: h }),
+      axios.get(`${TASK_SERVICE_URL}/tasks/search/q?q=${encodeURIComponent(q)}`, { headers: h }),
+    ]);
+    res.json([
+      ...(u.status === 'fulfilled' ? u.value.data : []),
+      ...(p.status === 'fulfilled' ? p.value.data : []),
+      ...(t.status === 'fulfilled' ? t.value.data : []),
+    ]);
+  } catch { res.status(500).json({ error: 'Search failed' }); }
+});
+
+app.post('/api/notify', express.json(), (req, res) => {
+  const { userId, event, data } = req.body;
+  if (userId) io.to(`user:${userId}`).emit(event, data);
+  else io.emit(event, data);
+  res.json({ sent: true });
+});
 
 app.use('/api', authenticate, (req, res, next) => {
   const url = req.originalUrl;
@@ -94,6 +141,8 @@ app.use('/api', authenticate, (req, res, next) => {
 server.listen(PORT, () => {
   console.log(`API Gateway on port ${PORT}`);
   console.log(`  /api/auth     → ${AUTH_SERVICE_URL}`);
+  console.log(`  /api/projects → ${PROJECT_SERVICE_URL}`);
+  console.log(`  /api/tasks    → ${TASK_SERVICE_URL}`);
 });
 
 module.exports = { app, io };
